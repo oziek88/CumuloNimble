@@ -1,0 +1,21 @@
+Connecting...
+
+<script>
+  append = (message) => {
+    var div = document.createElement('div')
+    div.innerText = message
+    document.body.append(div)
+  }
+  var ws = new WebSocket(`ws://${location.host}/websocket`)
+  ws.onmessage = message => append(message.data)
+
+  var button = document.createElement('button')
+  button.innerText = 'Turn off fan'
+  button.onclick = () => {
+    ws.send('turn off fan')
+    append('turn off fan')
+  }
+
+  document.body.append(button)
+
+</script>

@@ -27,7 +27,7 @@ sockets = Sockets(app)
 # print(wemo)
 # wemo_switch = env.get_switch(wemo[0])
 
-scenario = pd.read_csv('Scen1.csv', index_col=False)
+scenario = pd.read_csv('Scen3.csv', index_col=False)
 event_list = scenario['event']
 
 

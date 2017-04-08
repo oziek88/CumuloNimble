@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, render_template
 from flask_sockets import Sockets
 from ouimeaux.environment import Environment
@@ -27,9 +29,9 @@ sockets = Sockets(app)
 # print(wemo)
 # wemo_switch = env.get_switch(wemo[0])
 
-scenario_1 = pd.read_csv('Scen1.csv', index_col=False)
-scenario_2 = pd.read_csv('Scen2.csv', index_col=False)
-scenario_3 = pd.read_csv('Scen3.csv', index_col=False)
+scenario_1 = pd.read_csv('Scen1.csv', index_col=False).where(pd.notnull, None)
+scenario_2 = pd.read_csv('Scen2.csv', index_col=False).where(pd.notnull, None)
+scenario_3 = pd.read_csv('Scen3.csv', index_col=False).where(pd.notnull, None)
 
 
 class SmartPlug(object):
@@ -375,21 +377,8 @@ def home():
     return render_template('index.html')
 
 
-@sockets.route('/echo')
-def echo_socket(ws):
-      while not ws.closed:
-          message = ws.receive()
-          ws.send(message)
-
-
-def send_message(state):
-    ws = state['websocket']
-    count = state['count']
-
-    if count % 24 == 0:
-        ws.send('ALERT turn off fan')
-
-    ws.send('200')
+def send_message(ws, record):
+    ws.send(json.dumps(record))
 
 
 def handle_event(event):
@@ -416,14 +405,18 @@ def websocket(ws):
 
     data = scenario_1
 
-    event_list = data['event']
+    records = data.to_dict('records')
 
     while not ws.closed:
-        send_message(state)
         count = state['count']
-        event = event_list[count]
+
+        record = records[count]
+        send_message(ws, record)
+
+        event = record['event']
         print('Event: {}'.format(event))
         handle_event(event)
+
         state['count'] = count + 1
         sleep(.5)
 

@@ -1,21 +1,302 @@
-Connecting...
+<html>
+  <head>
+    <title>Dashboard</title>
+    <script src="/static/lib/d3.v3.min.js"></script>
+    <script src="/static/lib/socket.io.js"></script>
+    <script src="/static/lib/d3-queue.v2.min.js"></script>
+    <script src="/static/lib/jquery-3.1.0.min.js"></script>
+    <script src="/static/lib/jquery-ui.js"></script>
+    <script src="/static/lib/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/simplebar@2.1.0/dist/simplebar.js"></script>
 
-<script>
-  append = (message) => {
-    var div = document.createElement('div')
-    div.innerText = message
-    document.body.append(div)
-  }
-  var ws = new WebSocket(`ws://${location.host}/websocket`)
-  ws.onmessage = message => append(message.data)
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css" />
+    <link rel="stylesheet" href="/static/css/jquery-ui.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto" >
+    <link rel="stylesheet" href="https://unpkg.com/simplebar@2.1.0/dist/simplebar.css" />
 
-  var button = document.createElement('button')
-  button.innerText = 'Turn off fan'
-  button.onclick = () => {
-    ws.send('turn off fan')
-    append('turn off fan')
-  }
 
-  document.body.append(button)
+    
 
-</script>
+    <!--Application-->
+
+    <style>
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+
+        #nimbleLine_div{
+            background-color: rgba(179, 236, 255, 0.3);
+            box-shadow:1px 2px 6px 0 rgba(0,0,0,0.2);
+        }
+
+        .nimbleLine { 
+            margin:0px 0px 30px 0px;
+            /*border-bottom: 1px dashed black;*/
+        }
+
+        .nimbleLine .axis {
+            stroke-width: 1;
+        }
+
+        .nimbleLine .axis .tick line {
+            stroke: black;
+        }
+
+        .nimbleLine .axis .tick text {
+            fill: black;
+            font-size: 0.7em;
+        }
+
+        .nimbleLine .axis .domain {
+            fill: none;
+            stroke: black;
+        }
+
+        .nimbleLine .group {
+            fill: none;
+            stroke: black;
+            stroke-width: 1.5;
+        }
+        .more_axis {
+          width:75px;
+          height:500px;
+          background-color: red;    
+        }
+        </style>
+
+
+  </head>
+  <body>
+
+  <!-- NAVBAR -->
+    <nav id="header" class="navbar navbar-default">
+      <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">CumuloNimble</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <!--<li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>
+            <li><a href="#">Link</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                 <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#">Separated link</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#">One more separated link</a></li>
+              </ul>
+            </li>-->
+          </ul>
+
+             <form class="navbar-form navbar-left" action="midb_cat.html" method="GET">
+              <input type="text" name="catCode" id="catCode" class="form-control" placeholder="Search Devices">
+            <button type="submit" class="btn btn-default" value="Submit">Submit</button>
+            </form>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">Link</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#">Separated link</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+    <div id="nimbleLine_div">
+      <div id="nimbleLine_wrapper">
+        <div class="nimbleLine"></div>
+      </div>
+    </div>
+
+
+    <!--Views-->
+    <script>
+        var limit = 60 * 1,
+            duration = 750,
+            now = new Date(Date.now() - duration)
+
+        var width = $( window ).width(),
+            height = 400
+
+        var groups = {
+            static: {
+                value: 0,
+                color: 'orange',
+                data: d3.range(limit).map(function() {
+                    return 0
+                })
+            },
+            lights: {
+                value: 0,
+                color: 'green',
+                data: d3.range(limit).map(function() {
+                    return 0
+                })
+            },
+            fan: {
+                value: 0,
+                color: 'grey',
+                data: d3.range(limit).map(function() {
+                    return 0
+                })
+            }
+        }
+
+        var x = d3.time.scale()
+            .domain([now - (limit - 2), now - duration])
+            .range([0, width])
+
+        var y = d3.scale.linear()
+            .domain([0, 100])
+            .range([height, 0])
+
+        var line = d3.svg.line()
+            .interpolate('basis')
+            .x(function(d, i) {
+                return x(now - (limit - 1 - i) * duration)
+            })
+            .y(function(d) {
+                return y(d)
+            })
+
+
+        var svg = d3.select('.nimbleLine').append('svg')
+            .attr('class', 'chart')
+            .attr('width', width)
+            .attr('height', height + 50)
+
+        var axis = svg.append('g')
+            .attr('class', 'x axis')
+            .attr('transform', 'translate(75,' + height + ')')
+            .call(x.axis = d3.svg.axis().scale(x).orient('bottom'))
+
+        var yScale = d3.scale.linear()
+                  .domain([10000, -1000])
+                  .range([0, height+10]); 
+            yAxis = d3.svg.axis()
+                  .scale(yScale)
+                  .orient('left')
+            yAxis.tickValues( yScale.ticks( 9 ).concat( yScale.domain() ) );
+            svg.append('g')
+                  .attr('class', 'axis')
+                  .attr("transform", "translate(75,27)")
+                  .call(yAxis)
+                  .selectAll("text")
+                  .style("text-anchor", "end")
+                  .attr("dx", "0.25em")
+                  .attr("dy", "-1.25em")
+                  .attr("opacity", 1)
+                  .style("cursor", "default")
+                  .attr("transform", function(d) {
+                    return "rotate(-30)"
+                  });
+
+
+            svg.append("text")
+                .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
+                .attr("transform", "translate(25,200)rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+                .text("Watts");
+
+            svg.append("text")
+                .attr("text-anchor", "middle")  // this makes it easy to centre the text as the transform is applied to the anchor
+                .attr("transform", "translate("+ (width/2) +","+(height+40)+")")  // centre below axis
+                .text("Time");
+
+
+        
+        var paths = svg.append('g')
+
+        for (var name in groups) {
+            var group = groups[name]
+            group.path = paths.append('path')
+                .data([group.data])
+                .attr('class', name + ' group')
+                .style('stroke', group.color)
+                .attr('transform', 'translate(75,0)')
+        }
+
+        function generateRandomNumeric(min, max) {
+          return max - Math.random()*(max-min)
+        }
+
+        function tick() {
+        now = new Date()
+
+            // Add new values
+            for (var name in groups) {
+                var group = groups[name]
+                //group.data.push(group.value) // Real values arrive at irregular intervals
+                group.data.push(generateRandomNumeric(0, 3))
+                group.path.attr('d', line)
+            }
+
+            // Shift domain
+            x.domain([now - (limit - 2) * duration, now - duration])
+
+            // Slide x-axis left
+            axis.transition()
+                .duration(duration)
+                .ease('linear')
+                .call(x.axis)
+
+            // Slide paths left
+            paths.attr('transform', null)
+                .transition()
+                .duration(duration)
+                .ease('linear')
+                .attr('transform', 'translate(' + x(now - (limit - 1) * duration) + ')')
+                .each('end', tick)
+
+            // Remove oldest data point from each group
+            for (var name in groups) {
+                var group = groups[name]
+                group.data.shift()
+            }
+        }
+
+        tick()
+
+        append = (message) => {
+          var div = document.createElement('div')
+          div.innerText = message
+          document.body.append(div)
+        }
+        var ws = new WebSocket(`ws://${location.host}/websocket`)
+        ws.onmessage = message => append(message.data)
+
+        var button = document.createElement('button')
+        button.innerText = 'Turn off fan'
+        button.onclick = () => {
+          ws.send('turn off fan')
+          append('turn off fan')
+        }
+
+        document.body.append(button)
+    </script>
+
+
+
+  </body>
+</html>
+

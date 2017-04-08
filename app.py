@@ -31,6 +31,9 @@ def websocket(ws):
         if count % 24 == 0:
             ws.send('ALERT turn off fan')
 
+        # if count % 24 == 0:
+        #     ws.send('ALERT turn off fan')
+
         count += 1
         time.sleep(1)
 

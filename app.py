@@ -27,8 +27,9 @@ sockets = Sockets(app)
 # print(wemo)
 # wemo_switch = env.get_switch(wemo[0])
 
-scenario = pd.read_csv('Scen3.csv', index_col=False)
-event_list = scenario['event']
+scenario_1 = pd.read_csv('Scen1.csv', index_col=False)
+scenario_2 = pd.read_csv('Scen2.csv', index_col=False)
+scenario_3 = pd.read_csv('Scen3.csv', index_col=False)
 
 
 class SmartPlug(object):
@@ -413,7 +414,51 @@ def websocket(ws):
         'count': 0
     }
 
-    print('rqeuest')
+    data = scenario_1
+
+    event_list = data['event']
+
+    while not ws.closed:
+        send_message(state)
+        count = state['count']
+        event = event_list[count]
+        print('Event: {}'.format(event))
+        handle_event(event)
+        state['count'] = count + 1
+        sleep(.5)
+
+
+@sockets.route('/websocket2')
+def websocket2(ws):
+    state = {
+        'websocket': ws,
+        'count': 0
+    }
+
+    data = scenario_2
+
+    event_list = data['event']
+
+    while not ws.closed:
+        send_message(state)
+        count = state['count']
+        event = event_list[count]
+        print('Event: {}'.format(event))
+        handle_event(event)
+        state['count'] = count + 1
+        sleep(.5)
+
+
+@sockets.route('/websocket3')
+def websocket3(ws):
+    state = {
+        'websocket': ws,
+        'count': 0
+    }
+
+    data = scenario_3
+
+    event_list = data['event']
 
     while not ws.closed:
         send_message(state)

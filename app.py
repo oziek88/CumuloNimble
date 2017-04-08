@@ -8,7 +8,6 @@ from geventwebsocket.handler import WebSocketHandler
 app = Flask(__name__)
 sockets = Sockets(app)
 
-
 @app.route('/')
 def home():
     return render_template('index.html')

@@ -140,9 +140,9 @@
             height = 400
 
         var groups = {
-            static: {
+            base: {
                 value: 0,
-                color: 'orange',
+                color: 'purple',
                 data: d3.range(limit).map(function() {
                     return 0
                 })
@@ -156,7 +156,21 @@
             },
             fan: {
                 value: 0,
-                color: 'grey',
+                color: 'red',
+                data: d3.range(limit).map(function() {
+                    return 0
+                })
+            },
+            solar: {
+                value: 0,
+                color: 'orange',
+                data: d3.range(limit).map(function() {
+                    return 0
+                })
+            },
+            total: {
+                value: 0,
+                color: 'black',
                 data: d3.range(limit).map(function() {
                     return 0
                 })
@@ -240,14 +254,26 @@
           return max - Math.random()*(max-min)
         }
 
-        function tick() {
+
+      var ws = new WebSocket(`ws://${location.host}/websocket`)
+      ws.onmessage = message => {
+        var csv = JSON.parse(message.data)
+        console.log(csv);
+        
         now = new Date()
+
+        
 
             // Add new values
             for (var name in groups) {
                 var group = groups[name]
                 //group.data.push(group.value) // Real values arrive at irregular intervals
-                group.data.push(generateRandomNumeric(0, 3))
+                  groups["base"].data.push(csv.base)
+                  groups["lights"].data.push(csv.light)
+                  groups["fan"].data.push(csv.fan)
+                  groups["solar"].data.push(csv.solar)
+                  groups["total"].data.push(csv.total)
+
                 group.path.attr('d', line)
             }
 
@@ -273,10 +299,9 @@
                 var group = groups[name]
                 group.data.shift()
             }
-        }
+      }
 
-        tick()
-
+       
         append = (message) => {
           var div = document.createElement('div')
           div.innerText = message

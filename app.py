@@ -5,9 +5,11 @@ import requests
 from gevent import pywsgi, sleep, spawn
 from geventwebsocket.handler import WebSocketHandler
 
+import pandas as pd
+
 # pyW215 dependencies
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
+from urllib2 import Request, urlopen
+from urllib2 import URLError, HTTPError
 import xml.etree.ElementTree as ET
 import hmac
 import time
@@ -24,65 +26,10 @@ sockets = Sockets(app)
 # wemo = env.list_switches()
 # print(wemo)
 # wemo_switch = env.get_switch(wemo[0])
-event_list = [None for i in range(96)]
-event_list[10] = 'turn light on'
-event_list[20] = 'turn light off'
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+scenario = pd.read_csv('Scen1.csv', index_col=False)
+event_list = scenario['event']
 
-
-@sockets.route('/echo')
-def echo_socket(ws):
-      while not ws.closed:
-          message = ws.receive()
-          ws.send(message)
-
-
-def send_message(state):
-    ws = state['websocket']
-    count = state['count']
-
-    if count % 24 == 0:
-        ws.send('ALERT turn off fan')
-
-    ws.send('200')
-
-
-def handle_event(event):
-    if event == 'turn fan off':
-        sp.state = 'OFF'
-    elif event == 'turn fan on':
-        sp.state = 'ON'
-    elif event == 'turn light on':
-        requests.put('http://192.168.20.248/api/zK7R5W9GGfgIPv-4DvZzXLRP9MdCj3CTyeNaCN9i/lights/2/state'
-            , json={"on":True})
-    elif event == 'turn light off':
-        requests.put('http://192.168.20.248/api/zK7R5W9GGfgIPv-4DvZzXLRP9MdCj3CTyeNaCN9i/lights/2/state'
-            , json={"on":False})
-    else:
-        print("Invalid Event " + str(event))
-
-
-@sockets.route('/websocket')
-def websocket(ws):
-    state = {
-        'websocket': ws,
-        'count': 0
-    }
-
-    while not ws.closed:
-        send_message(state)
-        count = state['count']
-        handle_event(event_list[count])
-        state['count'] = count + 1
-        sleep(1)
-
-
-if __name__ == "__main__":
-    server = pywsgi.WSGIServer(('', 5000), app, handler_class=WebSocketHandler)
-    server.serve_forever()
 
 class SmartPlug(object):
     """
@@ -421,3 +368,64 @@ class SmartPlug(object):
         return payload.encode()
 
 sp = SmartPlug('192.168.1.110', '******')
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+
+@sockets.route('/echo')
+def echo_socket(ws):
+      while not ws.closed:
+          message = ws.receive()
+          ws.send(message)
+
+
+def send_message(state):
+    ws = state['websocket']
+    count = state['count']
+
+    if count % 24 == 0:
+        ws.send('ALERT turn off fan')
+
+    ws.send('200')
+
+
+def handle_event(event):
+    if event == 'turn fan off':
+        sp.state = 'OFF'
+    elif event == 'turn fan on':
+        sp.state = 'ON'
+    elif event == 'turn light on':
+        requests.put('http://192.168.20.248/api/zK7R5W9GGfgIPv-4DvZzXLRP9MdCj3CTyeNaCN9i/lights/2/state'
+            , json={"on":True})
+    elif event == 'turn light off':
+        requests.put('http://192.168.20.248/api/zK7R5W9GGfgIPv-4DvZzXLRP9MdCj3CTyeNaCN9i/lights/2/state'
+            , json={"on":False})
+    else:
+        print("Invalid Event " + str(event))
+
+
+@sockets.route('/websocket')
+def websocket(ws):
+    state = {
+        'websocket': ws,
+        'count': 0
+    }
+
+    print('rqeuest')
+
+    while not ws.closed:
+        send_message(state)
+        count = state['count']
+        event = event_list[count]
+        print('Event: {}'.format(event))
+        handle_event(event)
+        state['count'] = count + 1
+        sleep(.5)
+
+
+if __name__ == "__main__":
+    handle_event('turn light off')
+    server = pywsgi.WSGIServer(('', 5000), app, handler_class=WebSocketHandler)
+    server.serve_forever()

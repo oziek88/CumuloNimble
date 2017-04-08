@@ -168,7 +168,7 @@
                     return 0
                 })
             },
-            total: {
+            net: {
                 value: 0,
                 color: 'black',
                 data: d3.range(limit).map(function() {
@@ -272,7 +272,7 @@
                   groups["lights"].data.push(csv.light)
                   groups["fan"].data.push(csv.fan)
                   groups["solar"].data.push(csv.solar)
-                  groups["total"].data.push(csv.total)
+                  groups["net"].data.push(csv.net)
 
                 group.path.attr('d', line)
             }

@@ -1,9 +1,7 @@
-import time
-
 from flask import Flask, render_template
 from flask_sockets import Sockets
 
-from gevent import pywsgi
+from gevent import pywsgi, sleep, spawn
 from geventwebsocket.handler import WebSocketHandler
 
 
@@ -23,16 +21,36 @@ def echo_socket(ws):
           ws.send(message)
 
 
+def send_message(state):
+    ws = state['websocket']
+    count = state['count']
+
+    if count % 24 == 0:
+        ws.send('ALERT turn off fan')
+
+    ws.send('200')
+
+
+def receive_message(ws, state):
+    message = ws.receive()
+    print('Client sent message {}'.format(message))
+    spawn(receive_message, ws, state)
+
+
 @sockets.route('/websocket')
 def websocket(ws):
-    count = 0
-    while not ws.closed:
-        ws.send('200')
-        if count % 24 == 0:
-            ws.send('ALERT turn off fan')
+    state = {
+        'websocket': ws,
+        'count': 0
+    }
 
-        count += 1
-        time.sleep(1)
+    spawn(receive_message, ws, state)
+
+    while not ws.closed:
+        send_message(state)
+
+        state['count'] = state['count'] + 1
+        sleep(1)
 
 
 if __name__ == "__main__":

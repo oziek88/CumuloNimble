@@ -1,3 +1,4 @@
+from subprocess import Popen
 import os
 import json
 
@@ -62,9 +63,9 @@ def turn_fan_on():
 
 def handle_event(event):
     if event == 'turn fan off':
-        spawn(turn_fan_off)
+        Popen('python2 python2_wemo.py off'.split())
     elif event == 'turn fan on':
-        spawn(turn_fan_on)
+        Popen('python2 python2_wemo.py on'.split())
     elif event == 'turn light on':
 
     # plug.turn_on()
@@ -101,7 +102,7 @@ def websocket(ws):
         handle_event(event)
 
         state['count'] = count + 1
-        sleep(.5)
+        sleep(.4)
 
 
 @sockets.route('/websocket2')
@@ -134,14 +135,18 @@ def websocket3(ws):
 
     data = scenario_3
 
-    event_list = data['event']
+    records = data.to_dict('records')
 
     while not ws.closed:
-        send_message(state)
         count = state['count']
-        event = event_list[count]
+
+        record = records[count]
+        send_message(ws, record)
+
+        event = record['event']
         print('Event: {}'.format(event))
         handle_event(event)
+
         state['count'] = count + 1
         sleep(.5)
 

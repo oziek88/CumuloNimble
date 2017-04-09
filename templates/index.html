@@ -137,7 +137,7 @@
     <div style="margin:5px;color:orange;font-size:16px;float:left"> Solar</div>
     <div style="margin:5px;color:black;font-size:16px;float:left"> Total</div>
     </div>
-    
+
 
     <!--Views-->
     <script>
@@ -217,7 +217,7 @@
         var yScale = d3.scale.linear()
 
                   .domain([6500, -2000])
-                  .range([0, height+10]); 
+                  .range([0, height+10]);
 
             yAxis = d3.svg.axis()
                   .scale(yScale)
@@ -263,7 +263,7 @@
 
 
 
-      var ws = new WebSocket(`ws://${location.host}/websocket`)
+      var ws = new WebSocket(`ws://${location.host}/websocket3`)
       ws.onmessage = message => {
         var csv = JSON.parse(message.data)
         console.log(csv);
@@ -324,7 +324,7 @@
         }
 
 
-        
+
     </script>
 
 

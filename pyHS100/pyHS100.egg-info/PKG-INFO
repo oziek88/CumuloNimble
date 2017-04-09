@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: pyHS100
+Version: 0.2.4.2
+Summary: Interface for TPLink HS100 Smart Plugs.
+Home-page: https://github.com/GadgetReactor/pyHS100
+Author: Sean Seah (GadgetReactor)
+Author-email: sean@gadgetreactor.com
+License: GPLv3
+Description: UNKNOWN
+Platform: UNKNOWN

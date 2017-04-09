@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://unpkg.com/simplebar@2.1.0/dist/simplebar.css" />
 
 
-    
+
 
     <!--Application-->
 
@@ -31,7 +31,7 @@
             box-shadow:1px 2px 6px 0 rgba(0,0,0,0.2);
         }
 
-        .nimbleLine { 
+        .nimbleLine {
             margin:0px 0px 30px 0px;
             /*border-bottom: 1px dashed black;*/
         }
@@ -62,7 +62,7 @@
         .more_axis {
           width:75px;
           height:500px;
-          background-color: red;    
+          background-color: red;
         }
         </style>
 
@@ -207,7 +207,7 @@
 
         var yScale = d3.scale.linear()
                   .domain([10000, -1000])
-                  .range([0, height+10]); 
+                  .range([0, height+10]);
             yAxis = d3.svg.axis()
                   .scale(yScale)
                   .orient('left')
@@ -238,7 +238,7 @@
                 .text("Time");
 
 
-        
+
         var paths = svg.append('g')
 
         for (var name in groups) {
@@ -259,10 +259,10 @@
       ws.onmessage = message => {
         var csv = JSON.parse(message.data)
         console.log(csv);
-        
+
         now = new Date()
 
-        
+
 
             // Add new values
             for (var name in groups) {
@@ -301,14 +301,12 @@
             }
       }
 
-       
+
         append = (message) => {
           var div = document.createElement('div')
           div.innerText = message
           document.body.append(div)
         }
-        var ws = new WebSocket(`ws://${location.host}/websocket`)
-        ws.onmessage = message => append(message.data)
 
         var button = document.createElement('button')
         button.innerText = 'Turn off fan'

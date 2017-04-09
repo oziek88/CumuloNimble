@@ -106,6 +106,7 @@
              <form class="navbar-form navbar-left" action="midb_cat.html" method="GET">
               <input type="text" name="catCode" id="catCode" class="form-control" placeholder="Search Devices">
             <button type="submit" class="btn btn-default" value="Submit">Submit</button>
+            <button type="button" class="btn btn-primary">Override</button>
             </form>
           <ul class="nav navbar-nav navbar-right">
             <li><a href="#">Link</a></li>
@@ -129,6 +130,14 @@
       </div>
     </div>
 
+    <div id=legend style="margin-right:15px">
+    <div style="margin:5px;color:purple;font-size:16px;float:left"> Base</div>
+    <div style="margin:5px;color:green;font-size:16px;float:left"> Light</div>
+    <div style="margin:5px;color:red;font-size:16px;float:left"> Fan</div>
+    <div style="margin:5px;color:orange;font-size:16px;float:left"> Solar</div>
+    <div style="margin:5px;color:black;font-size:16px;float:left"> Total</div>
+    </div>
+    
 
     <!--Views-->
     <script>
@@ -202,11 +211,11 @@
 
         var axis = svg.append('g')
             .attr('class', 'x axis')
-            .attr('transform', 'translate(75,' + height + ')')
+            .attr('transform', 'translate(75,' + (height-65) + ')')
             .call(x.axis = d3.svg.axis().scale(x).orient('bottom'))
 
         var yScale = d3.scale.linear()
-                  .domain([10000, -1000])
+                  .domain([6500, -2000])
                   .range([0, height+10]); 
             yAxis = d3.svg.axis()
                   .scale(yScale)
@@ -247,19 +256,16 @@
                 .data([group.data])
                 .attr('class', name + ' group')
                 .style('stroke', group.color)
-                .attr('transform', 'translate(75,0)')
+                .attr('transform', 'translate(75,-65)')
         }
 
-        function generateRandomNumeric(min, max) {
-          return max - Math.random()*(max-min)
-        }
 
 
       var ws = new WebSocket(`ws://${location.host}/websocket`)
       ws.onmessage = message => {
         var csv = JSON.parse(message.data)
         console.log(csv);
-        
+        function tick() {
         now = new Date()
 
         
@@ -268,11 +274,11 @@
             for (var name in groups) {
                 var group = groups[name]
                 //group.data.push(group.value) // Real values arrive at irregular intervals
-                  groups["base"].data.push(csv.base)
-                  groups["lights"].data.push(csv.light)
-                  groups["fan"].data.push(csv.fan)
-                  groups["solar"].data.push(csv.solar)
-                  groups["net"].data.push(csv.net)
+                  groups["base"].data.push(csv.base *10)
+                  groups["lights"].data.push(csv.light *10)
+                  groups["fan"].data.push(csv.fan *10)
+                  groups["solar"].data.push(csv.solar *10)
+                  groups["net"].data.push(csv.net *10)
 
                 group.path.attr('d', line)
             }
@@ -299,7 +305,10 @@
                 var group = groups[name]
                 group.data.shift()
             }
+          }
+          tick()
       }
+
 
        
         append = (message) => {
@@ -307,17 +316,9 @@
           div.innerText = message
           document.body.append(div)
         }
-        var ws = new WebSocket(`ws://${location.host}/websocket`)
-        ws.onmessage = message => append(message.data)
+        
 
-        var button = document.createElement('button')
-        button.innerText = 'Turn off fan'
-        button.onclick = () => {
-          ws.send('turn off fan')
-          append('turn off fan')
-        }
-
-        document.body.append(button)
+        
     </script>
 
 
